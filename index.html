@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For You</title>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:'Inter',sans-serif;
+background:#EAF1FF;
+height:100vh;
+overflow:hidden;
+}
+
+#app{
+height:100%;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.card{
+position:absolute;
+width:90%;
+max-width:420px;
+max-height:90vh;
+overflow:auto;
+background:#fff;
+border-radius:26px;
+padding:40px 32px;
+text-align:center;
+box-shadow:0 30px 70px rgba(0,0,0,.15);
+opacity:0;
+transform:scale(.94) translateY(40px);
+transition:.7s cubic-bezier(.19,1,.22,1);
+pointer-events:none;
+}
+
+.card::-webkit-scrollbar{width:6px}
+.card::-webkit-scrollbar-thumb{background:#6FA8FF;border-radius:10px}
+
+.card.active{
+opacity:1;
+transform:scale(1) translateY(0);
+pointer-events:auto;
+}
+
+h1,h2{
+font-family:'DM Serif Display',serif;
+margin:0 0 14px;
+}
+
+p{font-size:15px;line-height:1.7;opacity:.85}
+
+button{
+padding:12px 26px;
+border:none;
+border-radius:999px;
+background:#2E5AAC;
+color:white;
+cursor:pointer;
+margin-top:18px;
+font-size:15px;
+transition:.25s;
+}
+button:hover{
+transform:scale(1.05);
+box-shadow:0 10px 25px rgba(46,90,172,.4);
+}
+
+/* PIN */
+.pin-display{
+display:flex;
+justify-content:center;
+gap:12px;
+margin:25px 0;
+}
+.dot{
+width:18px;
+height:18px;
+border-radius:50%;
+border:2px solid #2E5AAC;
+}
+.dot.fill{background:#2E5AAC}
+
+.keypad{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
+}
+.keypad button{
+padding:16px;
+font-size:18px;
+border-radius:14px;
+}
+
+/* GAME */
+#options{
+display:flex;
+flex-direction:column;
+gap:12px;
+margin-top:20px;
+}
+#options button{
+background:#2E5AAC;
+border:1px solid #0d3277;
+}
+
+.score-box{
+margin-top:22px;
+font-size:15px;
+letter-spacing:.5px;
+}
+
+#feedback{
+margin-top:14px;
+min-height:22px;
+font-size:14px;
+transition:.3s;
+}
+
+.correctAnim{
+animation:pop .4s ease;
+background:#388ca3 !important;
+border-color:#8facdb !important;
+}
+@keyframes pop{
+0%{transform:scale(.9)}
+60%{transform:scale(1.08)}
+100%{transform:scale(1)}
+}
+
+.wrongAnim{
+animation:shake .4s;
+background:#d84343 !important;
+border-color:#ff9b9b !important;
+}
+
+@keyframes shake{
+25%{transform:translateX(-6px)}
+50%{transform:translateX(6px)}
+75%{transform:translateX(-4px)}
+}
+
+/* TIMER */
+.lovebox{
+background:linear-gradient(145deg,#fff,#dbe8ff);
+border-radius:22px;
+padding:20px;
+margin-bottom:25px;
+box-shadow:0 12px 35px rgba(46,90,172,.25);
+border:1px solid rgba(46,90,172,.25);
+}
+
+.timer-title{
+font-size:12px;
+letter-spacing:2px;
+color: #0d3277;
+opacity:.6;
+}
+
+.timer-display{
+font-family:'DM Serif Display',serif;
+font-size:25px;
+margin-top:8px;
+color:#1B3C73;
+letter-spacing:1px;
+animation:pulse 2.5s infinite;
+text-shadow:0 0 12px rgba(111,168,255,.6);
+}
+@keyframes pulse{50%{opacity:.5}}
+
+/* MEDIA */
+.reveal-box{
+margin:20px 0;
+aspect-ratio:16/9;
+display:flex;
+align-items:center;
+justify-content:center;
+border-radius:20px;
+border:2px dashed #2E5AAC;
+cursor:pointer;
+background:#F4F8FF;
+transition:.3s;
+}
+.reveal-box:hover{transform:scale(1.02)}
+
+/* LETTER FINAL */
+.letter{
+margin-top:22px;
+font-family:'Cormorant Garamond',serif;
+font-size:18px;
+line-height:1.3;
+letter-spacing:.4px;
+text-align:left;
+color:black;
+opacity:.95;
+min-height:100px;
+animation:fadeInText 1.2s ease;
+}
+
+.signature{
+margin-top:32px;
+text-align:right;
+font-family:'Playfair Display',serif;
+font-size:20px;
+letter-spacing:1px;
+color:#1B3C73;
+animation:fadeInText 1.8s ease;
+}
+
+.card h1 {
+color: #0d3277;
+font-size: 22px;
+}
+
+
+@keyframes fadeInText{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+
+/* HEART BACKGROUND */
+canvas{
+position:fixed;
+inset:0;
+z-index:-1;
+pointer-events:none;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="confettiCanvas"></canvas>
+
+   <audio id="bgm" src="song.mp3" loop></audio>
+   
+<div id="app">
+
+<!-- welcome -->
+<section class="card active">
+<h1>I’m all yours</h1>
+<p>something special is waiting for you but unlock it first ya sayang </p>
+<button onclick="next()">Unlock</button>
+</section>
+
+<!-- pin -->
+<section class="card">
+<h2>Enter the code 🔐</h2>
+<div class="pin-display" id="pin"></div>
+
+<div class="keypad">
+<button onclick="press(1)">1</button>
+<button onclick="press(2)">2</button>
+<button onclick="press(3)">3</button>
+<button onclick="press(4)">4</button>
+<button onclick="press(5)">5</button>
+<button onclick="press(6)">6</button>
+<button onclick="press(7)">7</button>
+<button onclick="press(8)">8</button>
+<button onclick="press(9)">9</button>
+<button onclick="clearPin()">⌫</button>
+<button onclick="press(0)">0</button>
+<button onclick="checkPin()">✔</button>
+</div>
+</section>
+
+<!-- quiz -->
+<section class="card">
+<h2 id="question">Little game 🎮</h2>
+<p>Answer correctly to earn points</p>
+<div id="options"></div>
+
+<div class="score-box">
+Points: <span id="score">0</span> / 5
+</div>
+
+<p id="feedback"></p>
+</section>
+
+<!-- final -->
+<section class="card">
+
+<h1>a little piece of us, kept forever in time</h1>
+
+<div class="lovebox">
+<div class="timer-title">TIME WITH YOU</div>
+<div id="loveTimer" class="timer-display">loading...</div>
+</div>
+
+<div class="reveal-box" onclick="revealMemory(this)">
+Tap to reveal our memory
+</div>
+
+<div id="letter" class="letter"></div>
+<div id="sign" class="signature"></div>
+
+</section>
+
+</div>
+
+<script>
+
+/* =================================================
+   SLIDE NAVIGATION
+================================================= */
+
+const cards=document.querySelectorAll('.card');
+let page=0;
+const music=document.getElementById("bgm");
+music.volume=0.4;
+let musicStarted=false;
+
+function show(){
+cards.forEach(c=>c.classList.remove('active'));
+cards[page].classList.add('active');
+if(page===3)startTimer();
+}
+
+function next(){
+page++;
+
+if(page===1 && !musicStarted){
+music.play();
+musicStarted=true;
+}
+
+show();
+if(page===2)loadQuestion();
+}
+
+
+/* =================================================
+   PIN SYSTEM
+================================================= */
+
+let pinInput = '';
+const correctPin = '2601';
+const pinDisplay = document.getElementById("pin");
+
+function renderDots(){
+    pinDisplay.innerHTML = '';
+
+    for(let i=0;i<4;i++){
+        const d = document.createElement("div");
+        d.className = "dot" + (i < pinInput.length ? " fill" : "");
+        pinDisplay.appendChild(d);
+    }
+}
+
+renderDots();
+
+function press(n){
+    if(pinInput.length < 4){
+        pinInput += n;
+        renderDots();
+    }
+}
+
+function clearPin(){
+    pinInput = pinInput.slice(0,-1);
+    renderDots();
+}
+
+function checkPin(){
+    if(pinInput === correctPin){
+        next();
+    }else{
+        pinDisplay.classList.add('shake');
+
+        setTimeout(()=>{
+            pinDisplay.classList.remove('shake');
+        },400);
+
+        pinInput = '';
+        renderDots();
+    }
+}
+
+
+/* =================================================
+   QUIZ SYSTEM
+================================================= */
+
+const questions=[
+{q:"When did we first meet?", options:["July","October","January"],correct:2},
+{q:"Who fell harder in love?", options:["Both","you","me"],correct:0},
+{q:"What do I do when I miss you?", options:["Text you nonstop"," play games","watch movies."],correct:0},
+{q:"What’s our favorite song?", options:["Never Let Go","Risk It All","Die For You"],correct:1},
+{q:"Which Mr. Bread character do we like the most?", options:["Potato","Wilk","Bread"],correct:1}
+];
+
+let currentQ = 0;
+let score = 0;
+
+const scoreEl = document.getElementById("score");
+const question = document.getElementById("question");
+const options = document.getElementById("options");
+const feedback = document.getElementById("feedback");
+
+
+function loadQuestion(){
+
+    const q = questions[currentQ];
+
+    question.textContent = q.q;
+    options.innerHTML = "";
+    feedback.textContent = "";
+
+    q.options.forEach((opt,i)=>{
+        const b = document.createElement("button");
+        b.textContent = opt;
+        b.onclick = () => checkAnswer(i,b);
+        options.appendChild(b);
+    });
+}
+
+
+function checkAnswer(i,btn){
+
+    const q = questions[currentQ];
+
+    if(i === q.correct){
+
+        score++;
+        scoreEl.textContent = score;
+
+        btn.classList.add("correctAnim");
+        feedback.textContent = "Correct🤍";
+
+        setTimeout(()=>{
+            currentQ++;
+
+            if(currentQ < questions.length){
+                loadQuestion();
+            }else{
+                next();
+            }
+        },900);
+
+    }else{
+
+        btn.classList.add("wrongAnim");
+        feedback.textContent = "Oh no, Try again!";
+    }
+}
+
+
+/* =================================================
+   RELATIONSHIP TIMER
+================================================= */
+
+function startTimer(){
+
+    const start = new Date(" 2026-01-26T00:00:00");
+
+    setInterval(()=>{
+
+        const diff = new Date() - start;
+
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor(diff / 3600000) % 24;
+        const m = Math.floor(diff / 60000) % 60;
+        const s = Math.floor(diff / 1000) % 60;
+
+        loveTimer.textContent = `${d} days ${h}h ${m}m ${s}s`;
+
+    },1000);
+}
+
+
+/* =================================================
+   MEMORY REVEAL + TYPING LETTER
+================================================= */
+
+let alreadyRevealed = false;
+
+function revealMemory(el){
+
+    if(alreadyRevealed) return;
+    alreadyRevealed = true;
+
+    el.innerHTML = `
+        <img src="pict.jpg"
+        style="width:100%;height:100%;object-fit:cover;border-radius:18px">
+    `;
+
+    const text = `
+      another month passed with you, my favorite person, my safest place. every laugh, every little argument, every moment we spent together just made me love you even more. 
+      i don’t think i’ll ever get tired of loving you cause my heart keeps finding new reasons to fall for you all over again every single day. honestly, i want this to last forever. 
+      waking up with your name in my mind, telling you about my day, loving you in every possible way i can. and if life gives me more months, more years, more time… i’ll still choose you in every version of it. because my heart already belongs to you completely Orven Rassediant.
+      `;
+
+    const paragraphs = text.trim().split(/\n\s*\n/);
+
+    const letter = document.getElementById("letter");
+    const sign = document.getElementById("sign");
+
+    if(!letter || !sign) return console.error("Letter or Sign element missing");
+
+    let p=0;
+    let i=0;
+
+    function typeParagraph(){
+
+        if(p>=paragraphs.length){
+            sign.innerHTML="Sincerely<br> Me";
+            return;
+        }
+
+        const para=document.createElement("p");
+        letter.appendChild(para);
+
+        const typing=setInterval(()=>{
+            para.innerHTML+=paragraphs[p].charAt(i);
+            i++;
+
+            if(i>=paragraphs[p].length){
+                clearInterval(typing);
+                p++;
+                i=0;
+                setTimeout(typeParagraph,350);
+            }
+
+        },30);
+    }
+
+    typeParagraph();
+}
+
+
+/* =================================================
+   FLOATING HEARTS BACKGROUND
+================================================= */
+
+const canvas=document.getElementById("confettiCanvas");
+const ctx=canvas.getContext("2d");
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+
+const colors=[
+"rgba(27,60,115,0.35)",
+"rgba(46,90,172,0.35)",
+"rgba(111,168,255,0.35)"
+];
+
+let hearts=[];
+for(let i=0;i<140;i++){
+hearts.push({
+x:Math.random()*canvas.width,
+y:Math.random()*canvas.height,
+s:Math.random()*6+2,
+v:Math.random()*0.6+0.2,
+c:colors[Math.floor(Math.random()*colors.length)]
+});
+}
+
+function heart(x,y,s){
+ctx.beginPath();
+ctx.moveTo(x,y);
+ctx.bezierCurveTo(x,y-s,x-s,y-s,x-s,y);
+ctx.bezierCurveTo(x-s,y+s,x,y+s*1.4,x,y+s*1.8);
+ctx.bezierCurveTo(x,y+s*1.4,x+s,y+s,x+s,y);
+ctx.bezierCurveTo(x+s,y-s,x,y-s,x,y);
+ctx.fill();
+}
+
+function anim(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ctx.shadowColor="rgba(111,168,255,0.6)";
+ctx.shadowBlur=12;
+
+hearts.forEach(h=>{
+ctx.fillStyle=h.c;
+heart(h.x,h.y,h.s);
+h.y+=h.v;
+if(h.y>canvas.height){
+h.y=-90;
+h.x=Math.random()*canvas.width;
+}
+});
+
+requestAnimationFrame(anim);
+}
+anim();
+
+</script>
+
+</body>
+</html>
